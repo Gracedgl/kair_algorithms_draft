@@ -8,13 +8,14 @@ import numpy as np
 import rospkg  # noqa
 
 import rospy  # noqa
+import tf  # noqa
+import tf.transformations as tr  # noqa
 from gazebo_msgs.srv import DeleteModel, GetModelState, SpawnModel
 from geometry_msgs.msg import Pose
 from open_manipulator_msgs.msg import KinematicsPose, OpenManipulatorState
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
-import tf # noqa
-import tf.transformations as tr # noqa
+
 
 class OpenManipulatorRosBaseInterface(object):
     """Open Manipulator Interface based on ROS."""
@@ -42,12 +43,10 @@ class OpenManipulatorRosBaseInterface(object):
 
         rospy.on_shutdown(self.delete_target_block)
 
-
     def init_tf_transformer(self):
         # TODO: write docstring
 
         self.tf_listenser = tf.TransformListener()
-
 
     def init_publish_node(self):
         # TODO: write docstring
@@ -138,9 +137,18 @@ class OpenManipulatorRosBaseInterface(object):
             msg (KinematicsPose): Callback message contains kinematics pose.
         """
         try:
-            (self._gripper_position, self._gripper_orientation) = self.tf_listenser.lookupTransform('/world','/end_effector_link', rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            pass            
+            (
+                self._gripper_position,
+                self._gripper_orientation,
+            ) = self.tf_listenser.lookupTransform(
+                "/world", "/end_effector_link", rospy.Time(0)
+            )
+        except (
+            tf.LookupException,
+            tf.ConnectivityException,
+            tf.ExtrapolationException,
+        ):
+            pass
 
     def robot_state_callback(self, msg):
         """Callback function of robot state subscriber.
@@ -287,7 +295,7 @@ class OpenManipulatorRosBaseInterface(object):
         if dist < self.distance_threshold:
             self.success_count += 1
             if self.success_count == self.cfg["SUCCESS_COUNT"]:
-                print("Current episode succeeded")
+                print ("Current episode succeeded")
                 self.success_count = 0
                 return True
             else:
@@ -344,7 +352,7 @@ class OpenManipulatorRosBaseInterface(object):
             rospy.logwarn("OUT OF BOUNDARY : joint_1_limit exceeds")
 
         if self.termination_count == term_count:
-            print("Current episode terminated")
+            print ("Current episode terminated")
             self.termination_count = 0
             return True
         else:
