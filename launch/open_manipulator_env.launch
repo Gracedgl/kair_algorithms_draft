@@ -17,6 +17,11 @@
   <arg name="headless" default="false"/>
   <arg name="debug" default="false"/>
 
+  <!-- rviz & tf related args -->
+  <arg name="robot_name"     default="open_manipulator"/>
+  <arg name="open_rviz"      default="false" />
+  <arg name="use_gui"        default="false" />
+
   <!-- controller related -->
   <node name="$(arg use_robot_name)" pkg="open_manipulator_controller" type="open_manipulator_controller" output="screen" args="$(arg dynamixel_usb_port) $(arg dynamixel_baud_rate)">
       <param name="using_platform"       value="$(arg use_platform)"/>
@@ -36,6 +41,23 @@
     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
     <arg name="headless" value="$(arg headless)"/>
   </include>
+
+  <!-- rviz related -->
+
+
+    <!-- Send joint values -->
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
+      <param name="/use_gui" value="$(arg use_gui)"/>
+      <rosparam param="source_list" subst_value="true">["$(arg robot_name)/joint_states"]</rosparam>
+    </node>
+    <!-- Combine joint values to TF-->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+
+    <!-- Show in Rviz -->
+    <group if="$(arg open_rviz)">
+      <node name="rviz" pkg="rviz" type="rviz" args="-d $(find open_manipulator_description)/rviz/open_manipulator.rviz"/>
+    </group>
+
 
     <!-- Load the URDF into the ROS Parameter Server -->
     <param name="robot_description"

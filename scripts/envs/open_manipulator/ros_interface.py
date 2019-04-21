@@ -13,7 +13,8 @@ from geometry_msgs.msg import Pose
 from open_manipulator_msgs.msg import KinematicsPose, OpenManipulatorState
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64
-
+import tf # noqa
+import tf.transformations as tr # noqa
 
 class OpenManipulatorRosBaseInterface(object):
     """Open Manipulator Interface based on ROS."""
@@ -37,8 +38,16 @@ class OpenManipulatorRosBaseInterface(object):
         self.init_publish_node()
         self.init_subscribe_node()
         self.init_robot_pose()
+        self.init_tf_transformer()
 
         rospy.on_shutdown(self.delete_target_block)
+
+
+    def init_tf_transformer(self):
+        # TODO: write docstring
+
+        self.tf_listenser = tf.TransformListener()
+
 
     def init_publish_node(self):
         # TODO: write docstring
@@ -123,24 +132,15 @@ class OpenManipulatorRosBaseInterface(object):
 
     def kinematics_pose_callback(self, msg):
         """Callback function of gripper kinematic pose subscriber.
-
+            To resolve issue w/ subscribing f.k. info from the controller,
+            here we use the tf.transformation instead.
         Args:
             msg (KinematicsPose): Callback message contains kinematics pose.
         """
-        self.kinematics_pose = msg
-        _gripper_position = self.kinematics_pose.pose.position
-        self._gripper_position = [
-            _gripper_position.x,
-            _gripper_position.y,
-            _gripper_position.z,
-        ]
-        _gripper_orientation = self.kinematics_pose.pose.orientation
-        self._gripper_orientation = [
-            _gripper_orientation.x,
-            _gripper_orientation.y,
-            _gripper_orientation.z,
-            _gripper_orientation.w,
-        ]
+        try:
+            (self._gripper_position, self._gripper_orientation) = self.tf_listenser.lookupTransform('/world','/end_effector_link', rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass            
 
     def robot_state_callback(self, msg):
         """Callback function of robot state subscriber.
