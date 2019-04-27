@@ -2,6 +2,7 @@
 
 from abc import ABCMeta
 from math import cos, sin
+import time
 
 import gym
 import numpy as np
@@ -101,7 +102,7 @@ class OpenManipulatorRosBaseInterface(object):
         self.joint_efforts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         self._gripper_position = [0.0, 0.0, 0.0]
-        self._gripper_orientation = [0.0, 0.0, 0.0]
+        self._gripper_orientation = [0.0, 0.0, 0.0, 0.0]
         self.distance_threshold = self.cfg["DISTANCE_THRESHOLD"]
 
         self.moving_state = ""
@@ -109,7 +110,7 @@ class OpenManipulatorRosBaseInterface(object):
 
     def init_robot_pose(self):
         """Initialize robot gripper and joints position."""
-        self.pub_gripper_position.publish(np.random.uniform(0.0, 0.1))
+        self.pub_gripper_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint1_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint2_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint3_position.publish(np.random.uniform(-0.1, 0.1))
@@ -208,7 +209,7 @@ class OpenManipulatorRosBaseInterface(object):
         robot_joint_angles = np.array(self.joint_positions)
         robot_joint_velocities = np.array(self.joint_velocities)
         robot_joint_efforts = np.array(self.joint_efforts)
-
+ 
         obs = np.concatenate(
             (
                 gripper_pos,
@@ -270,11 +271,11 @@ class OpenManipulatorRosBaseInterface(object):
 
     def set_joints_position(self, joints_angles):
         """Move joints using joint position command publishers."""
-        self.pub_gripper_position.publish(joints_angles[0])
-        self.pub_joint1_position.publish(joints_angles[1])
-        self.pub_joint2_position.publish(joints_angles[2])
-        self.pub_joint3_position.publish(joints_angles[3])
-        self.pub_joint4_position.publish(joints_angles[4])
+        self.pub_joint1_position.publish(joint_angles[0])
+        self.pub_joint2_position.publish(joint_angles[1])
+        self.pub_joint3_position.publish(joint_angles[2])
+        self.pub_joint4_position.publish(joint_angles[3])
+        self.pub_gripper_position.publish(joint_angles[4])
 
     def _geom_interpolation(self, in_rad, out_rad, in_z, out_z, query):
         """interpolates along the outer shell of work space, based on z-position.
@@ -376,13 +377,14 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
         if block_pose is not None:
             assert self.train_mode is True
 
-        self.delete_target_block()
+#        self.delete_target_block()
 
-        self.pub_gripper_position.publish(np.random.uniform(0.0, 0.1))
+        self.pub_gripper_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint1_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint2_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint3_position.publish(np.random.uniform(-0.1, 0.1))
         self.pub_joint4_position.publish(np.random.uniform(-0.1, 0.1))
+        time.sleep(1.0)
 
         self.set_target_block(block_pose)
 
@@ -390,31 +392,36 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
         """Set target block Gazebo model"""
         # random generated blocks for train
         if block_pose is None:
-            polar_rad, polar_theta, overhead_orientation = (
+            polar_rad, polar_theta, z, overhead_orientation = (
                 np.random.uniform(*self.cfg["POLAR_RADIAN_BOUNDARY"]),
                 np.random.uniform(*self.cfg["POLAR_THETA_BOUNDARY"]),
+                np.random.uniform(*self.cfg["Z_BOUNDARY"]),
                 self.cfg["OVERHEAD_ORIENTATION"],
             )
 
-            block_pose = Pose()
-            block_pose.position.x = polar_rad * cos(polar_theta)
-            block_pose.position.y = polar_rad * sin(polar_theta)
-            block_pose.position.z = np.random.uniform(0.05, 0.28)
-            block_pose.orientation = overhead_orientation
+#            block_pose = Pose()
+            self.block_pose_position_x = polar_rad * cos(polar_theta)
+            self.block_pose_position_y = polar_rad * sin(polar_theta)
+            self.block_pose_position_z = z
 
-        block_reference_frame = "world"
-        model_path = rospkg.RosPack().get_path("kair_algorithms") + "/urdf/"
+        initial_block_pos = [
+            self.block_pose_position_x,
+            self.block_pose_position_y,
+            self.block_pose_position_z,
+        ]
+#        block_reference_frame = "world"
+#        model_path = rospkg.RosPack().get_path("kair_algorithms") + "/urdf/"
 
-        with open(model_path + "block/model.urdf", "r") as block_file:
-            block_xml = block_file.read().replace("\n", "")
-
-        rospy.wait_for_service("/gazebo/spawn_urdf_model")
-
-        try:
-            spawn_urdf = rospy.ServiceProxy("/gazebo/spawn_urdf_model", SpawnModel)
-            spawn_urdf("block", block_xml, "/", block_pose, block_reference_frame)
-        except rospy.ServiceException as e:
-            rospy.logerr("Spawn URDF service call failed: {0}".format(e))
+#        with open(model_path + "block/model.urdf", "r") as block_file:
+#            block_xml = block_file.read().replace("\n", "")
+#
+#        rospy.wait_for_service("/gazebo/spawn_urdf_model")
+#
+#        try:
+#            spawn_urdf = rospy.ServiceProxy("/gazebo/spawn_urdf_model", SpawnModel)
+#            spawn_urdf("block", block_xml, "/", block_pose, block_reference_frame)
+#        except rospy.ServiceException as e:
+#            rospy.logerr("Spawn URDF service call failed: {0}".format(e))
 
     def delete_target_block(self):
         """This will be called on ROS Exit, deleting Gazebo models.
@@ -435,25 +442,29 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
         Returns:
             L2 norm of end effector pose and object pose.
         """
-        rospy.wait_for_service("/gazebo/get_model_state")
-
-        try:
-            object_state_srv = rospy.ServiceProxy(
-                "/gazebo/get_model_state", GetModelState
-            )
-            object_state = object_state_srv("block", "world")
-            object_pose = [
-                object_state.pose.position.x,
-                object_state.pose.position.y,
-                object_state.pose.position.z,
-            ]
-            self._obj_pose = np.array(object_pose)
-        except rospy.ServiceException as e:
-            rospy.logerr("Spawn URDF service call failed: {0}".format(e))
-
-        # FK state of robot
+#        rospy.wait_for_service("/gazebo/get_model_state")
+#
+#        try:
+#            object_state_srv = rospy.ServiceProxy(
+#                "/gazebo/get_model_state", GetModelState
+#            )
+#            object_state = object_state_srv("block", "world")
+#            object_pose = [
+#                object_state.pose.position.x,
+#                object_state.pose.position.y,
+#                object_state.pose.position.z,
+#            ]
+#            self._obj_pose = np.array(object_pose)
+#        except rospy.ServiceException as e:
+#            rospy.logerr("Spawn URDF service call failed: {0}".format(e))
+#
+#        # FK state of robot
         end_effector_pose = np.array(self._gripper_position)
-
+        self._obj_pose = [
+            self.block_pose_position_x,
+            self.block_pose_position_y,
+            self.block_pose_position_z,
+        ]
         return np.linalg.norm(end_effector_pose - self._obj_pose)
 
 

@@ -1,15 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- controller related args -->
-  <arg name="use_robot_name"         default="open_manipulator"/>
-  <arg name="dynamixel_usb_port"     default="/dev/ttyUSB0"/>
-  <arg name="dynamixel_baud_rate"    default="1000000"/>
-  <arg name="control_period"         default="0.010"/>
-  <arg name="use_platform"           default="false"/>
-  <arg name="use_moveit"             default="false"/>
-  <arg name="planning_group_name"    default="arm"/>
-  <arg name="moveit_sample_duration" default="0.050"/>
-  
   <!-- gazebo related args -->
   <arg name="paused" default="false"/>
   <arg name="use_sim_time" default="true"/>
@@ -21,15 +11,6 @@
   <arg name="robot_name"     default="open_manipulator"/>
   <arg name="open_rviz"      default="false" />
   <arg name="use_gui"        default="false" />
-
-  <!-- controller related -->
-  <node name="$(arg use_robot_name)" pkg="open_manipulator_controller" type="open_manipulator_controller" output="screen" args="$(arg dynamixel_usb_port) $(arg dynamixel_baud_rate)">
-      <param name="using_platform"       value="$(arg use_platform)"/>
-      <param name="using_moveit"         value="$(arg use_moveit)"/>
-      <param name="planning_group_name"  value="$(arg planning_group_name)"/>
-      <param name="control_period"       value="$(arg control_period)"/>
-      <param name="moveit_sample_duration"  value="$(arg moveit_sample_duration)"/>
-  </node>
 
   <!-- gazebo related -->
   <rosparam file="$(find open_manipulator_gazebo)/config/gazebo_controller.yaml" command="load" />
@@ -43,8 +24,6 @@
   </include>
 
   <!-- rviz related -->
-
-
     <!-- Send joint values -->
     <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
       <param name="/use_gui" value="$(arg use_gui)"/>
@@ -58,7 +37,6 @@
       <node name="rviz" pkg="rviz" type="rviz" args="-d $(find open_manipulator_description)/rviz/open_manipulator.rviz"/>
     </group>
 
-
     <!-- Load the URDF into the ROS Parameter Server -->
     <param name="robot_description"
     command="$(find xacro)/xacro --inorder '$(find open_manipulator_description)/urdf/open_manipulator.urdf.xacro'"/>
@@ -67,6 +45,6 @@
     <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
      args="-urdf -model open_manipulator -z 0.0 -param robot_description"/>
 
-     <!-- ros_control robotis manipulator launch file -->
+    <!-- ros_control robotis manipulator launch file -->
     <include file="$(find open_manipulator_gazebo)/launch/open_manipulator_controller.launch"/>   
 </launch>

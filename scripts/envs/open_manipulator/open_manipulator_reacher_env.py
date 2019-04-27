@@ -1,5 +1,7 @@
 #! usr/bin/env python
 
+import time
+
 import gym
 import numpy as np
 from gym.utils import seeding
@@ -104,6 +106,7 @@ class OpenManipulatorReacherEnv(gym.Env):
             obs (array) : Array of joint position, joint velocity, joint effort
         """
         self.ros_interface.reset_gazebo_world()
+        time.sleep(0.1)
         obs = self.ros_interface.get_observation()
 
         return obs
