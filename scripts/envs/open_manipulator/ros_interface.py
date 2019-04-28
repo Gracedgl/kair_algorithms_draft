@@ -110,11 +110,11 @@ class OpenManipulatorRosBaseInterface(object):
 
     def init_robot_pose(self):
         """Initialize robot gripper and joints position."""
-        self.pub_gripper_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint1_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint2_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint3_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint4_position.publish(np.random.uniform(-0.1, 0.1))
+        self.pub_gripper_position.publish(np.random.uniform(0.0, 0.0))
+        self.pub_joint1_position.publish(np.random.uniform(0.0, 0.0))
+        self.pub_joint2_position.publish(np.random.uniform(0.0, 0.0))
+        self.pub_joint3_position.publish(np.random.uniform(0.0, 0.0))
+        self.pub_joint4_position.publish(np.random.uniform(0.0, 0.0))
 
     def joint_state_callback(self, msg):
         """Callback function of joint states subscriber.
@@ -269,7 +269,7 @@ class OpenManipulatorRosBaseInterface(object):
             dtype=np.float32,
         )
 
-    def set_joints_position(self, joints_angles):
+    def set_joints_position(self, joint_angles):
         """Move joints using joint position command publishers."""
         self.pub_joint1_position.publish(joint_angles[0])
         self.pub_joint2_position.publish(joint_angles[1])
@@ -378,13 +378,8 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
             assert self.train_mode is True
 
 #        self.delete_target_block()
-
-        self.pub_gripper_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint1_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint2_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint3_position.publish(np.random.uniform(-0.1, 0.1))
-        self.pub_joint4_position.publish(np.random.uniform(-0.1, 0.1))
-        time.sleep(1.0)
+        self.init_robot_pose()
+        time.sleep(0.5)
 
         self.set_target_block(block_pose)
 
@@ -400,14 +395,14 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
             )
 
 #            block_pose = Pose()
-            self.block_pose_position_x = polar_rad * cos(polar_theta)
-            self.block_pose_position_y = polar_rad * sin(polar_theta)
-            self.block_pose_position_z = z
+            block_pose_position_x = polar_rad * cos(polar_theta)
+            block_pose_position_y = polar_rad * sin(polar_theta)
+            block_pose_position_z = z
 
-        initial_block_pos = [
-            self.block_pose_position_x,
-            self.block_pose_position_y,
-            self.block_pose_position_z,
+        self.block_pose = [
+            block_pose_position_x,
+            block_pose_position_y,
+            block_pose_position_z,
         ]
 #        block_reference_frame = "world"
 #        model_path = rospkg.RosPack().get_path("kair_algorithms") + "/urdf/"
@@ -460,12 +455,8 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
 #
 #        # FK state of robot
         end_effector_pose = np.array(self._gripper_position)
-        self._obj_pose = [
-            self.block_pose_position_x,
-            self.block_pose_position_y,
-            self.block_pose_position_z,
-        ]
-        return np.linalg.norm(end_effector_pose - self._obj_pose)
+        print("end_effector_pose", end_effector_pose)
+        return np.linalg.norm(end_effector_pose - self.block_pose)
 
 
 class OpenManipulatorRosRealInterface(OpenManipulatorRosBaseInterface):
