@@ -37,10 +37,10 @@ class OpenManipulatorRosBaseInterface(object):
         self.termination_count = 0
         self.success_count = 0
 
+        self.init_tf_transformer()
         self.init_publish_node()
         self.init_subscribe_node()
         self.init_robot_pose()
-        self.init_tf_transformer()
 
         rospy.on_shutdown(self.delete_target_block)
 
@@ -129,14 +129,6 @@ class OpenManipulatorRosBaseInterface(object):
         self.joint_efforts = joints_states.effort
         # penalize jerky motion in reward for shaped reward setting.
         self.squared_sum_vel = np.linalg.norm(np.array(self.joint_velocities))
-
-    def kinematics_pose_callback(self, msg):
-        """Callback function of gripper kinematic pose subscriber.
-            To resolve issue w/ subscribing f.k. info from the controller,
-            here we use the tf.transformation instead.
-        Args:
-            msg (KinematicsPose): Callback message contains kinematics pose.
-        """
         try:
             (
                 self._gripper_position,
@@ -150,6 +142,16 @@ class OpenManipulatorRosBaseInterface(object):
             tf.ExtrapolationException,
         ):
             pass
+
+    def kinematics_pose_callback(self, msg):
+        """Callback function of gripper kinematic pose subscriber.
+            To resolve issue w/ subscribing f.k. info from the controller,
+            here we use the tf.transformation instead.
+        Args:
+            msg (KinematicsPose): Callback message contains kinematics pose.
+        """
+        raise NotImplementedError
+
 
     def robot_state_callback(self, msg):
         """Callback function of robot state subscriber.
