@@ -268,7 +268,7 @@ class OpenManipulatorRosBaseInterface(object):
             dtype=np.float32,
         )
 
-    def set_joints_position(self, joints_angles):
+    def set_joints_position(self, joint_angles):
         """Move joints using joint position command publishers."""
         self.pub_joint1_position.publish(joint_angles[0])
         self.pub_joint2_position.publish(joint_angles[1])
