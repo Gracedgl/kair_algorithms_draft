@@ -1,9 +1,9 @@
 #! usr/bin/env python
 
-import gym
 import numpy as np
-from gym.utils import seeding
 
+import gym
+from gym.utils import seeding
 from ros_interface import (
     OpenManipulatorRosGazeboInterface,
     OpenManipulatorRosRealInterface,
@@ -75,13 +75,13 @@ class OpenManipulatorReacherEnv(gym.Env):
 
         if self.env_mode == "sim":
             self.reward = self.compute_reward()
-#            if self.ros_interface.check_for_termination():
-#                self.done = True
+            # TODO: Add termination condition
+            #            if self.ros_interface.check_for_termination():
+            #                self.done = True
             if self.ros_interface.check_for_success():
                 self.done = True
 
         obs = self.ros_interface.get_observation()
-        print("obs", obs)
 
         if self.episode_steps == self._max_episode_steps:
             self.done = True
@@ -105,10 +105,7 @@ class OpenManipulatorReacherEnv(gym.Env):
             obs (array) : Array of joint position, joint velocity, joint effort
         """
         self.ros_interface.reset_gazebo_world()
-        print("RESET!")
         obs = self.ros_interface.get_observation()
-        print("RESET OBS", obs)
-        print("RESET BLOCK_POSE", self.ros_interface.block_pose)
 
         return obs
 
@@ -119,7 +116,6 @@ class OpenManipulatorReacherEnv(gym.Env):
             reward (Float64) : L2 distance of current distance and squared sum velocity.
         """
         cur_dist = self.ros_interface.get_dist()
-        print("cur_dist", cur_dist)
         if self.reward_func == "sparse":
             # 1 for success else 0
             reward = cur_dist <= self.ros_interface.distance_threshold

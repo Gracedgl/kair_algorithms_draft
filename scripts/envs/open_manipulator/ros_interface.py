@@ -152,7 +152,6 @@ class OpenManipulatorRosBaseInterface(object):
         """
         raise NotImplementedError
 
-
     def robot_state_callback(self, msg):
         """Callback function of robot state subscriber.
 
@@ -211,7 +210,7 @@ class OpenManipulatorRosBaseInterface(object):
         robot_joint_angles = np.array(self.joint_positions)
         robot_joint_velocities = np.array(self.joint_velocities)
         robot_joint_efforts = np.array(self.joint_efforts)
- 
+
         obs = np.concatenate(
             (
                 gripper_pos,
@@ -406,9 +405,12 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
             block_pose_position_y,
             block_pose_position_z,
         ]
+
+        # TODO: Add block generation condition when testing gazebo simulation.
+
 #        block_reference_frame = "world"
 #        model_path = rospkg.RosPack().get_path("kair_algorithms") + "/urdf/"
-
+#
 #        with open(model_path + "block/model.urdf", "r") as block_file:
 #            block_xml = block_file.read().replace("\n", "")
 #
@@ -455,9 +457,8 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
 #        except rospy.ServiceException as e:
 #            rospy.logerr("Spawn URDF service call failed: {0}".format(e))
 #
-#        # FK state of robot
+        # FK state of robot
         end_effector_pose = np.array(self._gripper_position)
-        print("end_effector_pose", end_effector_pose)
         return np.linalg.norm(end_effector_pose - self.block_pose)
 
 
