@@ -397,10 +397,10 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
             )
 
             block_pose = Pose()
-            self.block_pose.position.x = polar_rad * cos(polar_theta)
-            self.block_pose.position.y = polar_rad * sin(polar_theta)
-            self.block_pose.position.z = z
-            self.block_pose.orientation = overhead_orientation
+            block_pose.position.x = polar_rad * cos(polar_theta)
+            block_pose.position.y = polar_rad * sin(polar_theta)
+            block_pose.position.z = z
+            block_pose.orientation = overhead_orientation
 
         block_reference_frame = "world"
         model_path = rospkg.RosPack().get_path("kair_algorithms") + "/urdf/"
