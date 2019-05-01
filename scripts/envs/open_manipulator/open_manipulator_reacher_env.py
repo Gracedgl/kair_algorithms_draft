@@ -2,6 +2,7 @@
 
 import gym
 import numpy as np
+import rospy
 from gym.utils import seeding
 
 from ros_interface import (
@@ -50,6 +51,12 @@ class OpenManipulatorReacherEnv(gym.Env):
         self.action_space = self.ros_interface.get_action_space()
         self.observation_space = self.ros_interface.get_observation_space()
         self.seed()
+    
+        ##### DEBUG #####
+        self.prev_obs = None
+        self.counter = 0
+        self.step_counter = 0
+        #################
 
     def seed(self, seed=None):
         """Set random seed."""
@@ -81,7 +88,20 @@ class OpenManipulatorReacherEnv(gym.Env):
                 self.done = True
 
         obs = self.ros_interface.get_observation()
-        print("obs", obs)
+        ##### DEBUG #####
+#        if not np.isclose(self.prev_obs, obs, atol=1e-5).all():
+#            print("obs diff counter", self.counter)
+#            self.counter = 0
+#            self.prev_obs = None
+#        else:
+#            self.counter += 1
+#            self.prev_obs = obs.copy()
+
+        msg = "step, {}, {}".format(self.step_counter, obs.flatten().tolist())
+        rospy.logwarn(msg)
+        self.step_counter += 1
+#        print("act", act)
+#        print("obs", obs)
 
         if self.episode_steps == self._max_episode_steps:
             self.done = True
@@ -105,10 +125,10 @@ class OpenManipulatorReacherEnv(gym.Env):
             obs (array) : Array of joint position, joint velocity, joint effort
         """
         self.ros_interface.reset_gazebo_world()
-        print("RESET!")
+        rospy.logwarn("reset")
         obs = self.ros_interface.get_observation()
-        print("RESET OBS", obs)
-        print("RESET BLOCK_POSE", self.ros_interface.block_pose)
+#        print("RESET OBS", obs)
+#        print("RESET BLOCK_POSE", self.ros_interface.block_pose)
 
         return obs
 
@@ -119,7 +139,7 @@ class OpenManipulatorReacherEnv(gym.Env):
             reward (Float64) : L2 distance of current distance and squared sum velocity.
         """
         cur_dist = self.ros_interface.get_dist()
-        print("cur_dist", cur_dist)
+#        print("cur_dist", cur_dist)
         if self.reward_func == "sparse":
             # 1 for success else 0
             reward = cur_dist <= self.ros_interface.distance_threshold

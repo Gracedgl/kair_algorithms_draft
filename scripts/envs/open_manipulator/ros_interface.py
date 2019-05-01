@@ -33,6 +33,8 @@ class OpenManipulatorRosBaseInterface(object):
         self.joint_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_efforts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.right_endpoint_position = [0, 0, 0]
+        self.counter = 0
+        self.ros_counter = 0
 
         self.termination_count = 0
         self.success_count = 0
@@ -98,6 +100,8 @@ class OpenManipulatorRosBaseInterface(object):
             "joint4",
         ]
         self.joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.prev_joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
         self.joint_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_efforts = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -125,6 +129,20 @@ class OpenManipulatorRosBaseInterface(object):
         joints_states = msg
         self.joint_names = joints_states.name
         self.joint_positions = joints_states.position
+        msg = "ros, {}, {}".format(self.ros_counter, self.joint_positions)
+        rospy.logwarn(msg)
+        ##### DEBUG #####
+#        if not np.isclose(np.array(self.prev_joint_positions), 
+#                          np.array(self.joint_positions), atol=1e-5).all():
+#            print("joint_state diff counter", self.counter)
+#            self.counter = 0
+#            self.prev_joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#        else:
+#            self.prev_joint_positions = self.joint_positions.copy()
+#            self.counter += 1
+#        print("ros counter", self.ros_counter)
+        self.ros_counter += 1
+        #################
         self.joint_velocities = joints_states.velocity
         self.joint_efforts = joints_states.effort
         # penalize jerky motion in reward for shaped reward setting.
@@ -331,28 +349,28 @@ class OpenManipulatorRosBaseInterface(object):
         if self.joint_positions[0] <= abs(self.cfg["JOINT_LIMITS"]["HIGH"]["J1"] / 2):
             if rob_rad < self.cfg["INNER_RADIAN"]:
                 self.termination_count += 1
-                rospy.logwarn("OUT OF BOUNDARY : exceeds inner radius limit")
+#                rospy.logwarn("OUT OF BOUNDARY : exceeds inner radius limit")
             elif self.cfg["INNER_RADIAN"] <= rob_rad < self.cfg["OUTER_RADIAN"]:
                 upper_z = self._geom_interpolation(
                     inner_rad, outer_rad, inner_z, outer_z, rob_rad
                 )
                 if rob_z > upper_z:
                     self.termination_count += 1
-                    rospy.logwarn("OUT OF BOUNDARY : exceeds upper z limit")
+#                    rospy.logwarn("OUT OF BOUNDARY : exceeds upper z limit")
             elif outer_rad <= rob_rad < lower_rad:
                 bevel_z = self._geom_interpolation(
                     outer_rad, lower_rad, outer_z, lower_z, rob_rad
                 )
                 if rob_z > bevel_z:
                     self.termination_count += 1
-                    rospy.logwarn("OUT OF BOUNDARY : exceeds bevel z limit")
+#                    rospy.logwarn("OUT OF BOUNDARY : exceeds bevel z limit")
             else:
                 self.termination_count += 1
-                rospy.logwarn("OUT OF BOUNDARY : exceeds outer radius limit")
+#                rospy.logwarn("OUT OF BOUNDARY : exceeds outer radius limit")
         else:
             # joint_1 limit exceeds
             self.termination_count += 1
-            rospy.logwarn("OUT OF BOUNDARY : joint_1_limit exceeds")
+#            rospy.logwarn("OUT OF BOUNDARY : joint_1_limit exceeds")
 
         if self.termination_count == term_count:
             print ("Current episode terminated")
@@ -431,7 +449,8 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
             delete_model = rospy.ServiceProxy("/gazebo/delete_model", DeleteModel)
             delete_model("block")
         except rospy.ServiceException as e:
-            rospy.loginfo("Delete Model service call failed: {0}".format(e))
+            pass
+#            rospy.loginfo("Delete Model service call failed: {0}".format(e))
 
     def get_dist(self):
         """Get distance between end effector pose and object pose.
@@ -457,7 +476,7 @@ class OpenManipulatorRosGazeboInterface(OpenManipulatorRosBaseInterface):
 #
 #        # FK state of robot
         end_effector_pose = np.array(self._gripper_position)
-        print("end_effector_pose", end_effector_pose)
+#        print("end_effector_pose", end_effector_pose)
         return np.linalg.norm(end_effector_pose - self.block_pose)
 
 
