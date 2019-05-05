@@ -72,6 +72,7 @@ class OpenManipulatorReacherEnv(gym.Env):
 
         act = action.flatten().tolist()
         self.ros_interface.set_joints_position(act)
+        self.ros_interface.r.sleep()
 
         if self.env_mode == "sim":
             self.reward = self.compute_reward()
@@ -81,7 +82,9 @@ class OpenManipulatorReacherEnv(gym.Env):
             if self.ros_interface.check_for_success():
                 self.done = True
 
-        obs = self.ros_interface.get_observation()
+        obs, old_gripper_pos = self.ros_interface.get_observation()
+        print("orocos", obs)
+        print("rviz", old_gripper_pos)
 
         if self.episode_steps == self._max_episode_steps:
             self.done = True
@@ -116,6 +119,7 @@ class OpenManipulatorReacherEnv(gym.Env):
             reward (Float64) : L2 distance of current distance and squared sum velocity.
         """
         cur_dist = self.ros_interface.get_dist()
+        print("cur_dist", cur_dist)
         if self.reward_func == "sparse":
             # 1 for success else 0
             reward = cur_dist <= self.ros_interface.distance_threshold

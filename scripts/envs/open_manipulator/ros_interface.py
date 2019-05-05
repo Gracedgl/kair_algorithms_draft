@@ -29,6 +29,7 @@ class OpenManipulatorRosBaseInterface(object):
         """Initialization."""
         self.cfg = cfg
         self.train_mode = self.cfg["TRAIN_MODE"]
+        self.r = rospy.Rate(10)
 
         self.joint_speeds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -149,8 +150,8 @@ class OpenManipulatorRosBaseInterface(object):
 
         try:
             (
-                self._gripper_position,
-                self._gripper_orientation,
+                self._gripper_position_1,
+                self._gripper_orientation_1,
             ) = self.tf_listenser.lookupTransform(
                 "/world", "/end_effector_link", rospy.Time(0)
             )
@@ -238,7 +239,7 @@ class OpenManipulatorRosBaseInterface(object):
                 robot_joint_efforts,
             )
         )
-        return obs
+        return obs, np.array(self._gripper_position_1)
 
     def get_action_space(self):
         """Return the open manipulator's action space for this specific environment."""
