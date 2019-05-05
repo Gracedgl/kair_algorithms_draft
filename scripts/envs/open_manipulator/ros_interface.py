@@ -145,7 +145,21 @@ class OpenManipulatorRosBaseInterface(object):
         self._gripper_orientation[1] = (
             _fk_mat[0, 2] - _fk_mat[2, 0]) / (4 * self._gripper_orientation[3])
         self._gripper_orientation[2] = (
-            _fk_mat[1, 0] - _fk_mat[0, 1]) / (4 * self._gripper_orientation[3])                                       
+            _fk_mat[1, 0] - _fk_mat[0, 1]) / (4 * self._gripper_orientation[3])
+
+        try:
+            (
+                self._gripper_position,
+                self._gripper_orientation,
+            ) = self.tf_listenser.lookupTransform(
+                "/world", "/end_effector_link", rospy.Time(0)
+            )
+        except (
+            tf.LookupException,
+            tf.ConnectivityException,
+            tf.ExtrapolationException,
+        ):
+            pass
 
     def kinematics_pose_callback(self, msg):
         """Callback function of gripper kinematic pose subscriber.
