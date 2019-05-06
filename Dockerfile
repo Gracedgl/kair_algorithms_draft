@@ -35,8 +35,8 @@ RUN cd src/ && \
 	git clone -b ${ROS_DISTRO}-devel https://github.com/kairproject/open_manipulator_msgs.git && \
 	git clone -b ${ROS_DISTRO}-devel https://github.com/kairproject/open_manipulator_simulations.git && \
 	git clone -b ${ROS_DISTRO}-devel https://github.com/kairproject/robotis_manipulator.git && \
-	git clone https://github.com/gt-ros-pkg/hrl-kdl && \
-	git clone https://github.com/kairproject/kair_algorithms_draft.git
+	git clone https://github.com/gt-ros-pkg/hrl-kdl.git && \
+	git clone -b feat/docker https://github.com/kairproject/kair_algorithms_draft.git
 
 RUN cd src/DynamixelSDK/python && python setup.py install
 
@@ -50,6 +50,7 @@ RUN apt-get update && apt-get install -y python3-opengl zlib1g-dev libjpeg-dev p
 
 # install repository requirements
 RUN apt-get remove -y python-psutil
+
 RUN cd src/kair_algorithms_draft/scripts && python2.7 -m pip install -r requirements.txt
 RUN python2.7 -m pip install gym['Box2d']
 
