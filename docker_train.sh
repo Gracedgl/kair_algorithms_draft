@@ -4,7 +4,7 @@ ROS_DISTRO=kinetic
 CATKIN_WS=/root/catkin_ws
 KAIR=$CATKIN_WS/src/kair_algorithms_draft
 
-source ~/.bashrc
+source /opt/ros/$ROS_DISTRO/setup.bash
 
 if [ "$1" == "lunarlander" ]; then
 	cd $KAIR/scripts; \
