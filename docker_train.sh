@@ -5,6 +5,7 @@ CATKIN_WS=/root/catkin_ws
 KAIR=$CATKIN_WS/src/kair_algorithms_draft
 
 source /opt/ros/$ROS_DISTRO/setup.bash
+source $CATKIN_WS/devel/setup.bash
 
 if [ "$1" == "lunarlander" ]; then
 	cd $KAIR/scripts; \
